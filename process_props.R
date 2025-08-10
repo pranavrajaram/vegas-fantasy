@@ -4,7 +4,7 @@ library(nflreadr)
 library(DBI)
 
 # Read CSV
-df <- read_csv("nfl_season_props_master.csv") %>%
+df <- read_csv("data/roto_props_master.csv") %>%
   mutate(player = dp_cleannames(player))
 
 
@@ -73,7 +73,7 @@ df_clean <- df_clean %>%
 
 
 rosters <- nflreadr::load_rosters() %>%
-  select(full_name, team, position, headshot_url) %>%
+  select(full_name, position, headshot_url) %>%
   mutate(player = dp_cleannames(full_name)) %>%
   select(-full_name)
 
@@ -87,3 +87,23 @@ today <- Sys.Date()
 write.csv(df_merged, paste0("data/implied_fp_", gsub("-", "_", today), ".csv"))
 
 write.csv(df_merged, "data/implied_fp_latest.csv")
+
+
+suppressWarnings({
+  history_path <- "data/implied_fp_history.csv"
+  if (file.exists(history_path)) {
+    hist <- readr::read_csv(history_path, show_col_types = FALSE)
+  } else {
+    hist <- tibble()
+  }
+})
+
+
+hist_today <- df_merged
+
+hist_new <- hist %>%
+  dplyr::bind_rows(hist_today) %>%
+  dplyr::arrange(date, player) %>%
+  dplyr::distinct(player, date, .keep_all = TRUE)
+
+readr::write_csv(hist_new, history_path)
