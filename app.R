@@ -8,15 +8,20 @@ library(lubridate)
 library(stringr)
 
 # --- Data ---
-props_latest <- read_csv('data/implied_fp_latest.csv', show_col_types = FALSE) %>%
+owner <- "pranavrajaram"
+repo  <- "vegas-fantasy"
+branch <- "main"
+base_raw <- paste0("https://raw.githubusercontent.com/", owner, "/", repo, "/", branch, "/data/")
+
+raw_latest <- paste0(base_raw, "implied_fp_latest.csv")
+raw_hist   <- paste0(base_raw, "implied_fp_history.csv")
+
+props_latest <- read_csv(raw_latest, show_col_types = FALSE) %>%
   filter(position %in% c("QB", "RB", "WR", "TE"))
 
-props_hist <- read_csv('data/implied_fp_history.csv', show_col_types = FALSE) %>%
+props_hist <- read_csv(raw_hist, show_col_types = FALSE) %>%
   filter(position %in% c("QB", "RB", "WR", "TE"))
 
-# Ensure date is Date (in case it's character)
-props_hist <- props_hist %>%
-  mutate(date = as_date(date))
 
 # --- Compute 1-day movement from history (implied FP) ---
 trend_1d <- {
