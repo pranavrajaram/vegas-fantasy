@@ -1,5 +1,8 @@
-library(dplyr) 
-library(jsonlite) 
+library(dplyr)
+library(jsonlite)
+
+year_dir <- file.path("data", format(Sys.Date(), "%Y"))
+dir.create(year_dir, showWarnings = FALSE, recursive = TRUE)
 
 scrape_rotowire <- function(url) {
   today <- Sys.Date()
@@ -49,5 +52,5 @@ df_full <- pass_yards_df %>%
   mutate(across(where(is.character) & !c(player, team, date), as.numeric))
 
 
-# write dataframe to .csv in a folder called "data/"
-write.csv(df_full, 'data/roto_props_master.csv', row.names = F)
+# write dataframe to .csv in the current year's data folder
+write.csv(df_full, file.path(year_dir, "roto_props_master.csv"), row.names = F)

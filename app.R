@@ -7,11 +7,12 @@ library(tidyr)
 library(lubridate)
 library(stringr)
 
-# --- Data ---
+# load in data from github
 owner <- "pranavrajaram"
 repo  <- "vegas-fantasy"
 branch <- "main"
-base_raw <- paste0("https://raw.githubusercontent.com/", owner, "/", repo, "/", branch, "/data/")
+data_year <- format(Sys.Date(), "%Y")
+base_raw <- paste0("https://raw.githubusercontent.com/", owner, "/", repo, "/", branch, "/data/", data_year, "/")
 
 raw_latest <- paste0(base_raw, "implied_fp_latest.csv")
 raw_hist   <- paste0(base_raw, "implied_fp_history.csv")
@@ -23,7 +24,7 @@ props_hist <- read_csv(raw_hist, show_col_types = FALSE) %>%
   filter(position %in% c("QB", "RB", "WR", "TE"))
 
 
-# --- Compute 1-day movement from history (implied FP) ---
+# compute movement
 trend_1d <- {
   if (nrow(props_hist) == 0 || length(unique(props_hist$date)) < 2) {
     tibble(player = character(), delta_1d = numeric(), trend = character())
@@ -55,7 +56,6 @@ trend_1d <- {
   }
 }
 
-# --- UI ---
 ui <- navbarPage(
   title = "2025 Vegas Driven Fantasy Projections",
   tabPanel(
@@ -134,10 +134,9 @@ ui <- navbarPage(
   )
 )
 
-# --- Server ---
 server <- function(input, output, session) {
   
-  # ------------- Rankings -------------
+  # Rankings
   selectedData <- reactive({
     df <- props_latest %>%
       filter(position == input$position) %>%
@@ -199,7 +198,7 @@ server <- function(input, output, session) {
       gt_theme_espn()
   })
   
-  # ------------- Player tab -------------
+  # Player specific 
   player_hist <- reactive({
     req(nrow(props_hist) > 0, input$player_sel)
     props_hist %>%
@@ -224,7 +223,6 @@ server <- function(input, output, session) {
     }
   }
   
-  # ------------- Player tab (position-aware) -------------
   output$player_table <- render_gt({
     df <- player_hist()
     req(nrow(df) > 0)
@@ -232,14 +230,12 @@ server <- function(input, output, session) {
     pos <- df$position[1]
     allowed <- .allowed_metrics_by_pos(pos)
     
-    # intersect user's selections with allowed, always keep implied FP
     metrics <- intersect(input$player_metrics, allowed)
     if (!"implied_fantasy_points" %in% metrics)
       metrics <- c("implied_fantasy_points", metrics)
     
     show_cols <- unique(c("date", "team", "position", metrics))
     
-    # Δ vs previous date for selected metrics
     df_delta <- df %>%
       arrange(desc(date)) %>%
       mutate(across(all_of(metrics), ~ . - dplyr::lag(.), .names = "{.col}_chg"))
@@ -266,7 +262,6 @@ server <- function(input, output, session) {
     
     pos <- df$position[1]
     
-    # start from all *_line and _{over,under}_price columns
     raw_cols <- names(df)[str_detect(names(df), "_line$|_(over|under)_price$")]
     
     # filter by position
@@ -295,7 +290,7 @@ server <- function(input, output, session) {
       gt_theme_espn()
   })
   
-  # ------------- Movement tab (all stats: start vs end) -------------
+  # Movement tab
   output$movement_table <- render_gt({
     req(nrow(props_hist) > 0)
     

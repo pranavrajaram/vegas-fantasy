@@ -57,8 +57,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add all CSVs we might generate/update
-          git add data/*.csv || true
+          # Add all CSVs we might generate/update (nested under year folders)
+          git add data/ || true
 
           if git diff --cached --quiet; then
             echo "No changes to commit."

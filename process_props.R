@@ -3,8 +3,11 @@ library(ffscrapr)
 library(nflreadr)
 library(DBI)
 
+year_dir <- file.path("data", format(Sys.Date(), "%Y"))
+dir.create(year_dir, showWarnings = FALSE, recursive = TRUE)
+
 # Read CSV
-df <- read_csv("data/roto_props_master.csv") %>%
+df <- read_csv(file.path(year_dir, "roto_props_master.csv")) %>%
   mutate(player = dp_cleannames(player))
 
 
@@ -82,15 +85,15 @@ df_merged <- df_clean %>%
   select(player, team, position, headshot_url, everything()) %>%
   mutate(date = Sys.Date())
 
-today <- Sys.Date() 
+today <- Sys.Date()
 
-write.csv(df_merged, paste0("data/implied_fp_", gsub("-", "_", today), ".csv"))
+write.csv(df_merged, file.path(year_dir, paste0("implied_fp_", gsub("-", "_", today), ".csv")))
 
-write.csv(df_merged, "data/implied_fp_latest.csv")
+write.csv(df_merged, file.path(year_dir, "implied_fp_latest.csv"))
 
 
 suppressWarnings({
-  history_path <- "data/implied_fp_history.csv"
+  history_path <- file.path(year_dir, "implied_fp_history.csv")
   if (file.exists(history_path)) {
     hist <- readr::read_csv(history_path, show_col_types = FALSE)
   } else {
