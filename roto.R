@@ -9,9 +9,14 @@ scrape_rotowire <- function(url) {
   
   result <- fromJSON(txt = url)
   
-  df <- result %>% 
-    mutate(date = today) %>%
-    select(name, team, date, fanduel_line, fanduel_odds, fanduel_odds_under)
+  df <- result %>%
+    mutate(
+      date = today,
+      line       = dplyr::coalesce(fanduel_line,       caesars_line),
+      odds_over  = dplyr::coalesce(fanduel_odds,       caesars_odds),
+      odds_under = dplyr::coalesce(fanduel_odds_under, caesars_odds_under)
+    ) %>%
+    select(name, team, date, line, odds_over, odds_under)
   
   return(df)
 }
@@ -25,22 +30,22 @@ rush_tds_url <- "https://www.rotowire.com/betting/nfl/tables/player-futures.php?
 rec_tds_url <- "https://www.rotowire.com/betting/nfl/tables/player-futures.php?future=Rec%20TD"
 
 pass_yards_df <- scrape_rotowire(pass_yards_url) %>%
-  rename(player = name, pass_yds_line = fanduel_line, pass_yds_over_price = fanduel_odds, pass_yds_under_price = fanduel_odds_under)
+  rename(player = name, pass_yds_line = line, pass_yds_over_price = odds_over, pass_yds_under_price = odds_under)
 
 rush_yards_df <- scrape_rotowire(rush_yards_url) %>%
-  rename(player = name, rush_yds_line = fanduel_line, rush_yds_over_price = fanduel_odds, rush_yds_under_price = fanduel_odds_under)
+  rename(player = name, rush_yds_line = line, rush_yds_over_price = odds_over, rush_yds_under_price = odds_under)
 
 rec_yards_df <- scrape_rotowire(rec_yards_url) %>%
-  rename(player = name, rec_yds_line = fanduel_line, rec_yds_over_price = fanduel_odds, rec_yds_under_price = fanduel_odds_under)
+  rename(player = name, rec_yds_line = line, rec_yds_over_price = odds_over, rec_yds_under_price = odds_under)
 
 pass_tds_df <- scrape_rotowire(pass_tds_url) %>%
-  rename(player = name, pass_tds_line = fanduel_line, pass_tds_over_price = fanduel_odds, pass_tds_under_price = fanduel_odds_under)
+  rename(player = name, pass_tds_line = line, pass_tds_over_price = odds_over, pass_tds_under_price = odds_under)
 
 rush_tds_df <- scrape_rotowire(rush_tds_url) %>%
-  rename(player = name, rush_tds_line = fanduel_line, rush_tds_over_price = fanduel_odds, rush_tds_under_price = fanduel_odds_under)
+  rename(player = name, rush_tds_line = line, rush_tds_over_price = odds_over, rush_tds_under_price = odds_under)
 
 rec_tds_df <- scrape_rotowire(rec_tds_url) %>%
-  rename(player = name, rec_tds_line = fanduel_line, rec_tds_over_price = fanduel_odds, rec_tds_under_price = fanduel_odds_under)
+  rename(player = name, rec_tds_line = line, rec_tds_over_price = odds_over, rec_tds_under_price = odds_under)
 
 df_full <- pass_yards_df %>%
   full_join(rush_yards_df, by = c("player", "team", "date")) %>%
